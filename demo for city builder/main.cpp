@@ -41,6 +41,8 @@ int main()
             std::cout << "New map generated!" << std::endl;
         }
 
+        map.HandlePathFindingInput();
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
 

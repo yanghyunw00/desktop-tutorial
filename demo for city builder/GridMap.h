@@ -18,6 +18,9 @@ private:
     std::vector<GridCell> GridMapArray;
     std::vector<GridCell> IsoGridMapArray;
 
+    int mapOriginX = 0;
+    int mapOriginY = 0;
+
     Image PerlinNoiseImage;
     Texture2D PerlinNoiseTexture;
     Texture2D IsoMapTexture;

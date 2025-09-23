@@ -11,7 +11,7 @@ PathFinding::PathFinding(int sizeX, int sizeY, float maxClimb)
 
 PathFinding::~PathFinding()
 {
-    // Destructor
+    
 }
 
 void PathFinding::SetHeightMap(const std::vector<double>& heights)
@@ -82,23 +82,19 @@ std::vector<Node*> PathFinding::GetNeighbors(Node* node)
 {
     std::vector<Node*> neighbors;
 
-    // 8-directional movement
-    for (int x = -1; x <= 1; x++)
+    int dx[] = { 0, 0, 1, -1 }; // x 변화량 (좌, 우)
+    int dy[] = { 1, -1, 0, 0 }; // y 변화량 (상, 하)
+
+    for (int i = 0; i < 4; i++)
     {
-        for (int y = -1; y <= 1; y++)
+        int checkX = node->x + dx[i];
+        int checkY = node->y + dy[i];
+
+        if (checkX >= 0 && checkX < gridSizeX &&
+            checkY >= 0 && checkY < gridSizeY &&
+            CanClimb(node->x, node->y, checkX, checkY))
         {
-            if (x == 0 && y == 0) continue;
-
-            int checkX = node->x + x;
-            int checkY = node->y + y;
-
-            if (checkX >= 0 && checkX < gridSizeX &&
-                checkY >= 0 && checkY < gridSizeY &&
-                CanClimb(node->x, node->y, checkX, checkY))
-            {
-
-                neighbors.push_back(new Node(checkX, checkY));
-            }
+            neighbors.push_back(new Node(checkX, checkY));
         }
     }
 
@@ -134,12 +130,12 @@ std::vector<Vector2> PathFinding::FindPath(int startX, int startY, int endX, int
     if (startX < 0 || startX >= gridSizeX || startY < 0 || startY >= gridSizeY ||
         endX < 0 || endX >= gridSizeX || endY < 0 || endY >= gridSizeY)
     {
-        return path; // Return empty path
+        return path; 
     }
 
     if (!IsWalkable(startX, startY) || !IsWalkable(endX, endY))
     {
-        return path; // Return empty path
+        return path; 
     }
 
     Node* startNode = new Node(startX, startY);
@@ -149,7 +145,6 @@ std::vector<Vector2> PathFinding::FindPath(int startX, int startY, int endX, int
     std::vector<std::vector<bool>> closedSet(gridSizeY, std::vector<bool>(gridSizeX, false));
     std::vector<std::vector<Node*>> allNodes(gridSizeY, std::vector<Node*>(gridSizeX, nullptr));
 
-    // Initialize nodes
     for (int y = 0; y < gridSizeY; y++)
     {
         for (int x = 0; x < gridSizeX; x++)
@@ -172,7 +167,6 @@ std::vector<Vector2> PathFinding::FindPath(int startX, int startY, int endX, int
 
         if (currentNode->x == targetNode->x && currentNode->y == targetNode->y)
         {
-            // Path found
             path = RetracePath(startNode, targetNode);
             break;
         }
@@ -188,7 +182,7 @@ std::vector<Vector2> PathFinding::FindPath(int startX, int startY, int endX, int
             }
 
             Node* gridNeighbor = allNodes[neighbor->y][neighbor->x];
-            delete neighbor; // Clean up temporary neighbor
+            delete neighbor; 
 
             float newMovementCostToNeighbor = currentNode->gCost + GetDistance(currentNode, gridNeighbor);
 
@@ -212,7 +206,6 @@ std::vector<Vector2> PathFinding::FindPath(int startX, int startY, int endX, int
         }
     }
 
-    // Clean up
     for (int y = 0; y < gridSizeY; y++)
     {
         for (int x = 0; x < gridSizeX; x++)
@@ -233,7 +226,6 @@ void PathFinding::DrawPath(const std::vector<Vector2>& path, int tileWidth, int 
 
         DrawRectangle(static_cast<int>(x), static_cast<int>(y), tileWidth, tileHeight, color);
 
-        // Draw connection to next node
         if (i < path.size() - 1)
         {
             Vector2 start = { x + tileWidth / 2.0f, y + tileHeight / 2.0f };
@@ -254,13 +246,11 @@ void PathFinding::DrawPathIsometric(const std::vector<Vector2>& path, int tileWi
         int x = static_cast<int>(path[i].x);
         int y = static_cast<int>(path[i].y);
 
-        // Convert to isometric coordinates
         int isoX = (x - y) * TILE_WIDTH_HALF;
         int isoY = (x + y) * TILE_HEIGHT_HALF;
 
         DrawCircle(isoX, isoY, 5, color);
 
-        // Draw connection to next node
         if (i < path.size() - 1)
         {
             int nextX = static_cast<int>(path[i + 1].x);

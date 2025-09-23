@@ -12,7 +12,15 @@ GridMap::GridMap() : pathFinder(nullptr), showPath(false), isSelectingStart(true
 {
 	startPoint = { -1, -1 };
 	endPoint = { -1, -1 };
+
+	IsoGridTexture[0] = LoadTexture("Resources/textures/IsoWater.png");
+	IsoGridTexture[1] = LoadTexture("Resources/textures/IsoPlains.png");
+	IsoGridTexture[2] = LoadTexture("Resources/textures/IsoMountains.png");
+	IsoGridTexture[3] = LoadTexture("Resources/textures/IsoPeak.png");
+	Max_Height = LoadTexture("Resources/textures/Max_Height.png");
+	// -------------------------
 }
+
 
 GridMap::~GridMap()
 {
@@ -20,6 +28,14 @@ GridMap::~GridMap()
 	{
 		delete pathFinder;
 	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		UnloadTexture(IsoGridTexture[i]);
+	}
+	UnloadTexture(Max_Height);
+	UnloadTexture(IsoMapTexture);
+	UnloadTexture(PerlinNoiseTexture);
 }
 
 void GridMap::InitializePathFinding()
@@ -61,7 +77,7 @@ void GridMap::HandlePathFindingInput()
 	if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
 	{
 		Vector2 mousePos = GetMousePosition();
-		Vector2 gridPos = ScreenToGrid(mousePos, 10, 10); // Adjust tile size as needed
+		Vector2 gridPos = ScreenToGridIsometric(mousePos); 
 
 		if (gridPos.x >= 0 && gridPos.x < GRID_SIZE_X &&
 			gridPos.y >= 0 && gridPos.y < GRID_SIZE_Y)
@@ -333,52 +349,66 @@ void GridMap::ExportMapTexture()
 
 void GridMap::IsometricExportMap()
 {
+	// 1. 아이소메트릭 맵의 전체 너비와 높이 계산
+	// 너비 = (그리드 X 너비 + 그리드 Y 너비) * 타일 너비의 절반
+	const int total_iso_width = (GRID_SIZE_X + GRID_SIZE_Y) * TILE_WIDTH_HALF;
 
-	int offsetupper = (int)IsoGridMapArray[0].getHeight();
+	// 높이 = (그리드 X 너비 + 그리드 Y 너비) * 타일 높이의 절반 + 타일의 최대 높이값(여유 공간)
+	const int max_tile_height_offset = 256; // 타일의 최대 높이(255)보다 약간 큰 여유 공간
+	const int total_iso_height = (GRID_SIZE_X + GRID_SIZE_Y) * TILE_HEIGHT_HALF + max_tile_height_offset;
 
-	RenderTexture2D target = LoadRenderTexture(TILE_WIDTH* GRID_SIZE_X,TILE_HEIGHT*GRID_SIZE_Y+ offsetupper + 225);
+	// 2. 계산된 전체 크기로 렌더 텍스처 생성
+	RenderTexture2D target = LoadRenderTexture(total_iso_width, total_iso_height);
 	BeginTextureMode(target);
-	
-	int originX = ((TILE_WIDTH/2)*GRID_SIZE_X) - TILE_WIDTH /2;
-	int originY = offsetupper;
-	int current_texture;
+	ClearBackground(BLANK); // 투명한 배경으로 초기화
 
-	for (int sum = 0; sum < GRID_SIZE_X + GRID_SIZE_Y - 1; ++sum) {
-		for (int x = 0; x <= sum; ++x) {
-			
+	// 3. 그리기 시작점(Origin) 설정
+	// X축 시작점: 텍스처 너비의 중앙
+	int originX = total_iso_width / 2 - TILE_WIDTH_HALF;
+	// Y축 시작점: 타일의 최대 높이를 고려하여 충분한 상단 여백 확보
+	int originY = max_tile_height_offset;
+
+	// 기존과 동일한 그리기 루프
+	int current_texture;
+	for (int sum = 0; sum < GRID_SIZE_X + GRID_SIZE_Y - 1; ++sum)
+	{
+		for (int x = 0; x <= sum; ++x)
+		{
+
 			int y = sum - x;
 
-
-			if (x >= 0 && x < GRID_SIZE_X && y >= 0 && y < GRID_SIZE_Y) {
-
+			if (x >= 0 && x < GRID_SIZE_X && y >= 0 && y < GRID_SIZE_Y)
+			{
 
 				int screenX = originX + (x - y) * TILE_WIDTH_HALF;
 				int screenY = originY + (x + y) * TILE_HEIGHT_HALF;
-
-				
 
 				int count = y * GRID_SIZE_X + x;
 				GridCell currentCell = IsoGridMapArray[count];
 				double height = currentCell.getHeight();
 
 				current_texture = 3;
-				if(height < 205) current_texture = 2;
+				if (height < 205) current_texture = 2;
 				if (height < 150) current_texture = 1;
 				if (height < 75) current_texture = 0;
 
 				DrawTexture(IsoGridTexture[current_texture], screenX, screenY - height, WHITE);
-				DrawTexture(Max_Height, screenX, screenY- height, WHITE);
+				DrawTexture(Max_Height, screenX, screenY - height, WHITE);
 			}
 		}
 	}
 
-
-
 	EndTextureMode();
 	Image image = LoadImageFromTexture(target.texture);
 	ImageFlipVertical(&image);
+	if (IsoMapTexture.id != 0)
+	{
+		UnloadTexture(IsoMapTexture);
+	}
 	IsoMapTexture = LoadTextureFromImage(image);
 	ExportImage(image, "IsoMap.png");
+	UnloadImage(image);  
+	UnloadRenderTexture(target); 
 }
 
 
