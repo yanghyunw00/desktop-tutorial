@@ -1,31 +1,47 @@
 #pragma once
 
+
+enum class TerrainType
+{
+	Water,
+	Plains,
+	Mountain,
+	Snow,
+	None
+};
+
 // the basis for all gridMap occupiers. implement a basic is full and is destoryed fuction to be used.
 struct GridCell
 {
-	GridCell()//should accept a normalized height value between 0 and 1 from the perlin noisemap
+	GridCell() : Height(0.0), Type(TerrainType::None), isOccupied(false), isDestroyed(false)//should accept a normalized height value between 0 and 1 from the perlin noisemap
 	{
 
 	}
-	GridCell(double height)//should accept a normalized height value between 0 and 1 from the perlin noisemap
+	GridCell(double height) : Height(height), isOccupied(false), isDestroyed(false)//should accept a normalized height value between 0 and 1 from the perlin noisemap
 	{
-		Height = height;
+		if (Height < 75.0)      Type = TerrainType::Water;
+		else if (Height < 150.0) Type = TerrainType::Plains;
+		else if (Height < 205.0) Type = TerrainType::Mountain;
+		else                    Type = TerrainType::Snow;
 	}
 	// normal gridcells hold information about the terrian it is situated on, if it is being used by some building or person and etc
 	// public functions > getter and setter functions to be called when creating or changing the gridcell.
 
 	bool isWalkable() const
 	{
-		// 나중에 water도 추가
-		return Height >= 30.0;
+		return Type != TerrainType::Water;
 	}
 
-	float getMovementCost() const // 높이에 따른 g cost 
+	float getMovementCost() const
 	{
-		if (Height < 75) return 2.0f;   // Water 
-		if (Height < 150) return 1.0f;  // Plains
-		if (Height < 205) return 1.5f;  // Hills 
-		return 2.5f;                    // Mountains 
+		switch (Type)
+		{
+		case TerrainType::Water:    return 5.0f;
+		case TerrainType::Plains:   return 1.0f;
+		case TerrainType::Mountain: return 1.5f;
+		case TerrainType::Snow:     return 2.5f;
+		default:                    return 999.9f;
+		}
 	}
 
 
@@ -40,9 +56,13 @@ struct GridCell
 	void setWater(bool water) { isWater = water; }
 	bool getWater() const { return isWater; }
 
+	TerrainType getType() const { return Type; }
+
+
 
 private:
 	double Height = 0.0; 
+	TerrainType Type;
 	double Temperature = 0.0;
 	int resources = 0;
 

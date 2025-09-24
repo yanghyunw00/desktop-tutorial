@@ -39,14 +39,15 @@ private:
     int gridSizeX, gridSizeY;
     std::vector<std::vector<float>> heightMap;
     std::vector<std::vector<bool>> walkableMap;
-    float maxClimbHeight; // Maximum height difference that can be climbed
+    std::vector<std::vector<float>> costMap;
+    float maxClimbHeight;
 
-    float GetDistance(Node* nodeA, Node* nodeB);
     float GetManhattanDistance(Node* nodeA, Node* nodeB);
     bool IsWalkable(int x, int y);
     bool CanClimb(int fromX, int fromY, int toX, int toY);
     std::vector<Node*> GetNeighbors(Node* node);
     std::vector<Vector2> RetracePath(Node* startNode, Node* endNode);
+    std::vector<std::vector<Node*>> allNodes;
 
 public:
     PathFinding(int sizeX, int sizeY, float maxClimb = 50.0f);
@@ -54,12 +55,11 @@ public:
 
     void SetHeightMap(const std::vector<double>& heights);
     void SetWalkable(int x, int y, bool walkable);
+    void SetCostMap(const std::vector<float>& costs);
     bool IsPositionWalkable(int x, int y);
 
     std::vector<Vector2> FindPath(Vector2 start, Vector2 end);
     std::vector<Vector2> FindPath(int startX, int startY, int endX, int endY);
 
-    // Visualization helpers
-    void DrawPath(const std::vector<Vector2>& path, int tileWidth, int tileHeight, Color color = RED);
-    void DrawPathIsometric(const std::vector<Vector2>& path, int tileWidth, int tileHeight, Color color = RED);
+    void DrawPathIsometric(const std::vector<Vector2>& path, int tileWidth, int tileHeight, int isoOriginX, int isoOriginY, Color color);
 };
